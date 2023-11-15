@@ -82,3 +82,55 @@ def convert_date(date_string):
     """
     # Convert the string to a datetime object
     return datetime.datetime.strptime(date_string, "%d/%m/%Y")
+
+
+
+def extract_name(text):
+    # Define a regular expression pattern to match the name
+    name_pattern = re.compile(r'\b([A-ZÉÈÊËÎÏÔÛÙÜÇÀÂÆŒa-zéèêëîïôûùüçàâæœ\s-]+)\b')
+
+    # Search for the pattern in the input text
+    match = name_pattern.search(text)
+
+    # Check if a match is found
+    if match:
+        # Extract and return the matched name
+        return match.group(1)
+    else:
+        # Return None if no match is found
+        return None
+    
+def extract_age(text):
+    # Define a regular expression pattern to match the age
+    age_pattern = re.compile(r'\b\d{4}/(\d{1,2}) ans\b')
+
+    # Search for the pattern in the input text
+    match = age_pattern.search(text)
+
+    # Check if a match is found
+    if match:
+        # Extract and return the numeric part of the age
+        return match.group(1)
+    else:
+        # Return None if no match is found
+        return None
+    
+
+
+def extract_nage_info(event_description):
+    # Define the pattern to match the information in the string
+    pattern = r'(\d+)x(\d+) (.+)$'
+
+    # Use re.match to find the first match in the string
+    match = re.match(pattern, event_description)
+
+    if match:
+        # Extract the number of laps, distance, and the remaining part from the matched groups
+        num_laps = int(match.group(1))
+        distance = int(match.group(2))
+        remaining_part = match.group(3).split(" ")[0]
+
+        return f"{num_laps}x{distance}  {remaining_part}"
+    else:
+        # Return None if no match is found
+        return None

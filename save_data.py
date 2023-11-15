@@ -3,14 +3,6 @@ from src.function.swimmer import find_all_nage_by_swimmer, findAllSwimmer_FFN_id
 
 
 
-specialList = [
-                   ["RIOU Yann ","612256"],
-                   ["EVEN Thomas ","1567489"],
-                   ["ALLAIN Cyril ","1592945"],
-                   ["DANIEL Thomas","1793845"],
-
-                  ]
-
 
 if __name__ == "__main__":
     list_nageur = findAllSwimmer_FFN_id(list_all_nageur = list_all_swimmer())

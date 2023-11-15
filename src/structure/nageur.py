@@ -30,4 +30,4 @@ class Nageur:
         return int(self.id_ffn)
 
     def __repr__(self) -> str:
-        return f'name: {self.name} {self.sex} - {self.lastname} url : {self.url_abcnatation}\n{self.nage}'
+        return f'name: {self.name} ({self.sex}) - {self.lastname} url : {self.url_abcnatation}\n{self.nage}'

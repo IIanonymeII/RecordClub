@@ -3,12 +3,13 @@
 
 import datetime
 import re
-from typing import Union
+from typing import List, Union
 from bs4 import BeautifulSoup
 import requests
 from src.structure import nage
 
-from src.webscrapping.filter_data import convert_date, convert_time, extract_city, find_nage
+from src.webscrapping.filter_data import convert_date, convert_time, extract_age, extract_city, extract_nage_info, extract_name, find_nage
+from src.structure.relai import NageRelai
 
 
 def find_ffn_info_for_one_swimmer(url: str) -> int:
@@ -106,6 +107,106 @@ def find_time_by_swimmer(id_ffn: int):
                         # print(f"{result[-1]}")
     return result
 
-        
+def find_bassin_for_relai(text:str) -> int:
+    bassin = 50
+    if "25 m" in text:
+        bassin = 25
+    return bassin
+
+def find_sex_for_relai(text:str) -> str:
+    sex = "?"
+    if "Dames" in text:
+        sex = "F"
+    elif "Mixtes" in text:
+        sex = "A"
+    else:
+        sex = "H"
+    return sex
+
+
+def find_time_for_relai(text: str) -> Union[str, datetime.datetime]:
+    time = "?"
+    if text == "DSQ":
+        time = "DSQ"
+    else:
+        time = convert_time(text)
     
+    return time
+
+def find_pts_for_relai(text: str) -> Union[str, int]:
+    pts = ".."
+    if bool(text):
+        pts = int(text.replace(" pts",""))
+    return pts
+
+def find_is_relai(text: Union[str,None]) -> bool:
+    is_relai = False
+    if  text and ("x" in text):
+        is_relai = True
+
+    return is_relai
+
+    
+def find_relai_swimmer_in_compet(url: str) -> List[NageRelai]:
+    relai_result = []
+    response = requests.get(url)
+    # Parse the HTML content
+    soup = BeautifulSoup(response.content, 'html.parser')
+    
+    # Find a specific element using its tag name and (optionally) its attributes
+    results = soup.find_all('table')
+    
+    # Print the results
+    is_club = False    
+    is_relai = False
+    bassin = find_bassin_for_relai(str(soup.find("fieldset",{"class":"enteteCompetition"})))
+    
+    for result in results:
+        if "LANNION NATATION" in str(result):
+
+            nage_type = "?"
+            sex = "?"
+            for tr in result.find_all("tr"):
+                if 'class="tabColInsert' in str(tr):
+                    nage_type_brut = tr.find("div",{"class":"tabColInsertTextLeft"}).text
+                    nage_type = extract_nage_info(nage_type_brut)
+                    sex = find_sex_for_relai(nage_type_brut)
+
+                    is_relai = find_is_relai(nage_type)
+                    is_club = False
+
+                elif "DNS dec" in str(tr):
+                    is_club = False
+                    
+                elif "LANNION NATATION" in str(tr)  and is_relai:
+                    time_str = tr.find("td",{"class":"tabColTps"}).text
+                    time = find_time_for_relai(time_str)
+
+                    pts_str = tr.find("td",{"class":"tabColPts"}).text
+                    pts = find_pts_for_relai(pts_str)
+
+                    relai_result.append(NageRelai(bassin=bassin,sex=sex,type=nage_type, time=time, pts=pts, link_relai=url, nageur=[]))
+
+                    is_club = True
+                
+                elif "spacer.gif" in str(tr): 
+                    is_club = False
+
+                else:
+                    pass
+                
+                if is_club and is_relai:
+                    try:
+                        t = tr.find("td",{"class":"tabColInd"})
+                        t2 = t.find("a",{"class":"tooltip"}).get_text()
+                        t3_name = extract_name(t2)
+                        t3_age = extract_age(t2)
+                        relai_result[-1].set_max_age(age=int(t3_age))
+                        relai_result[-1].add_nageur(t3_name)
+                    except:
+                        print(relai_result[-1])
+                        print(url)
+                        raise
+                    
+    return relai_result
 
